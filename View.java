@@ -78,7 +78,8 @@ public class View extends JFrame{
 		limitLabelError.setVisible(false);
 		try{
 			limitNumber = Integer.parseInt(limit.getText());
-			buildQueueTest2();
+			out.setText("Search running...");
+			buildQueue();
 			
 		}catch(NumberFormatException e){
 			e.getMessage();
@@ -87,16 +88,7 @@ public class View extends JFrame{
 		}
 	}
 	
-	private void buildQueueTest2(){
-		/*
-		add while loop for while queue is not empty and while less then limit.
-			add initial website to queue before while. 
-			dequeue website, search that website for links, add all links to the queue through the for loop. 
-		
-		put for loop inside the while loop. 
-		
-		do not use embedded for loops. 
-	*/
+	private void buildQueue(){
 		long startTime = System.currentTimeMillis();
 		count = 0;
 		out.setText("");
@@ -109,110 +101,30 @@ public class View extends JFrame{
 	    		
 	    		Document doc = Jsoup.connect(websiteQueue.remove()).get();
 
-	    		String title = doc.title();
-	    		
 	    		if(doc.text().contains(search.getText())){
-	    			outputText += webpage_link;
+	    			outputText += doc.attr("href");
 	    		}
 	    		
 	    		Elements links = doc.select("a[href]");
 	    		for (Element link : links) {
-	    			if(link.attr("href").length() >= 2){
-	    				count++;
-	    				System.out.println(link.attr("href") + "\n\t" + title + "\n\t" + link.text());
-	    				websiteQueue.add(link.attr("href"));
-	    				if(link.text().contains(search.getText()))
-	    					outputText += link.attr("href") + "\n";
-	    			}
+	    			
+	    			//Check to see if link is a valid link to another page.
+	    			count++;
+	    			System.out.println(link.attr("abs:href"));
+	    			websiteQueue.add(link.attr("abs:href"));
+	    			if(link.text().contains(search.getText()))
+	    				outputText += link.attr("href") + "\n";
 	    		}
-	    	}catch(Exception e){
+	    	}catch(IOException e){
 	    		e.getMessage();
 	    	}
 	    }
 	    long endTime = System.currentTimeMillis(); 
-	    outputText += "End of search.\nSearched " + count + " links\n";
-	    outputText += "Search speed: " + (endTime - startTime) + " ms";
+	    outputText += "End of search.\nSearched " + count + " links in " + (endTime - startTime) + " ms";
 	    
 	    out.setText(outputText);
 	}
 	
-	//attempt with embedded for loops. 
-	private void buildQueueTest(){
-		count = 0;
-		out.setText("");
-		String webpage_link, outputText = "";
-	    webpage_link=start.getText();
-	    try{
-	    	Document doc = Jsoup.connect(webpage_link).get();
-
-	    	String title = doc.title();
-	     
-	    	Elements links = doc.select("a[href]");
-	    	for (Element link : links) {
-	    		count++;
-    	    	System.out.println(link.attr("href") + "\n" + title + "\n" + link.text() + "\n");
-    	    	websiteQueue.add(link.attr("href"));
-    	    	Document doc2 = Jsoup.connect(link.attr("href")).get();
-    	    	String title2 = doc2.title();
-    	    	Elements links2 = doc2.select("a[href]");
-    	    	if(links2.size() > 0)
-    	    	{
-    	    		for (Element link2 : links2) {
-    	    			websiteQueue.add(link2.attr("href"));
-    	    			count++;
-    	    			System.out.println("\t" + link2.attr("href") + "\n\t" + title2 + "\n\t" + link2.text() + "\n");
-    	    			//Document doc3 = Jsoup.connect(link.attr("href")).get();
-    	    	    	//String title3 = doc3.title();
-    	    	    	//Elements links3 = doc3.select("a[href]");
-    	    	    	//if(links3.size() > 0)
-    	    	    	//{
-    	    	    	//	for (Element link3 : links3) {
-    	    	    	//		websiteQueue.add(link3.attr("href"));
-    	    	    	//		count++;
-    	    	    	//		System.out.println("\t\t" + link3.attr("href") + "\n\t\t" + title3 + "\n\t\t" + link3.text() + "\n");		
-    	    	    	//	}
-    	    	    	//}
-    	    		}
-    	    	}
-	    	}
-	    }catch(Exception e){
-	    	e.getMessage();
-	    }
-	    System.out.println();
-	    System.out.println(websiteQueue);
-	    System.out.println(websiteQueue.size());
-	    System.out.println();
-	    outputText += "End of search.\nSearched " + count + " links";
-	    out.setText(outputText);
-	}
-	
-	//this just grabs all the links on the first website. 
-	private void buildQueue(){
-		count = 0;
-		out.setText("");
-		String webpage_link, outputText = "";
-	    webpage_link=start.getText();
-	    try{
-	    	Document doc = Jsoup.connect(webpage_link).get();
-
-	    	String title = doc.title();
-	     
-	    	Elements links = doc.select("a[href]");
-	    	for (Element link : links) {
-	    		count++;
-    	    	System.out.println(link.attr("href") + "\n" + title + "\n" + link.text() + "\n");
-	    		if(link.text().contains(search.getText()) || title.contains(search.getText()))
-	    		{
-	    	    	outputText += link.attr("href") + "\n";
-	    		}
-	    	}
-	    }catch(Exception e){
-	    	e.getMessage();
-	    }
-	    outputText += "End of search.\nSearched " + count + " links";
-	    out.setText(outputText);
-	}
-	  
 	private void setLocations(){
 		Dimension size;
 		
