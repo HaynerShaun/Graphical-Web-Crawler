@@ -3,20 +3,23 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Queue;
+
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-/*
+/**
  * The View class builds the GUI, handles the user input, and executes the web search based on user input
  */
 
@@ -45,9 +48,9 @@ public class View extends JFrame{
 	private int limitNumber = 0;
 
 	private Queue<String> websiteQueue;
-	private Queue<String> searchedWebsites;
+	private ArrayList<String> searchedWebsites;
 	
-	/*
+	/**
 	 * View() represents the constructor for the view class. 
 	 */
 	public View()
@@ -79,12 +82,12 @@ public class View extends JFrame{
 		super.setLocationRelativeTo(null);
 	}
 	
-	/*
+	/**
 	 * the search method instantiates the queues and calls the buildQueue method
 	 */
 	private void search(){
 		websiteQueue = new LinkedList<String>();
-		searchedWebsites = new LinkedList<String>();
+		searchedWebsites = new ArrayList<String>();
 		limitLabelError.setVisible(false);
 		startLabelError.setVisible(false);
 		try{
@@ -108,7 +111,7 @@ public class View extends JFrame{
 		}
 	}
 	
-	/*
+	/**
 	 * the buildQueue method gets user input. Then starts searching the users first link, grabs all 
 	 * links off that page. then continues to search links to it on each page it searched until the 
 	 * limit is reached
@@ -150,7 +153,7 @@ public class View extends JFrame{
 	    out.setText(outputText);
 	} 
 	
-	/*
+	/**
 	 * the SetLocations method sets the locations of the GUI items.
 	 */
 	private void setLocations(){
@@ -184,7 +187,7 @@ public class View extends JFrame{
 		startLabelError.setVisible(false);
 	}
 	
-	/*
+	/**
 	 * the goButtonListener listens for the go button to be pressed, then runs the search method
 	 */
 	private class goButtonListener implements ActionListener{
@@ -193,7 +196,7 @@ public class View extends JFrame{
 		}
 	}
 	
-	/*
+	/**
 	 * the resetButtonListener listens for the reset button to be pressed, then clears the GUI of all information
 	 */
 	private class resetButtonListener implements ActionListener{
