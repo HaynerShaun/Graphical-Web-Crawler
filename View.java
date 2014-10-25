@@ -1,21 +1,29 @@
-import java.awt.*;
-
-import javax.swing.*;
-
-import java.awt.event.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
-
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element; 
+import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
+/*
+ * The View class builds the GUI, handles the user input, and executes the web search based on user input
+ */
 
 public class View extends JFrame{
 	private JLabel startLabel = new JLabel("Start:");
 	private JLabel searchLabel = new JLabel("Search:");
+	private JLabel startLabelError = new JLabel("URL must start with http:// or https://");
 	private JLabel limitLabel = new JLabel("Limit:");
 	private JLabel limitLabelError = new JLabel("Invalid limit");
 	
@@ -33,11 +41,15 @@ public class View extends JFrame{
 	private final int FRAMEHEIGHT = 300;
 	private final int startX = 10;
 	private final int startY = 10;
-	private int count = 0;
+	private int count = 0, foundCount = 0;
 	private int limitNumber = 0;
+
+	private Queue<String> websiteQueue;
+	private Queue<String> searchedWebsites;
 	
-	private Queue<String> websiteQueue = new LinkedList<String>();
-	
+	/*
+	 * View() represents the constructor for the view class. 
+	 */
 	public View()
 	{
 		super.setLayout(null);
@@ -49,11 +61,10 @@ public class View extends JFrame{
 		go.addActionListener(new goButtonListener());
 		reset.addActionListener(new resetButtonListener());
 		
-		setStarterText();
-		
 		super.add(startLabel);
 		super.add(start);
 		super.add(searchLabel);
+		super.add(startLabelError);
 		super.add(search);
 		super.add(limitLabel);
 		super.add(limitLabelError);
@@ -68,63 +79,80 @@ public class View extends JFrame{
 		super.setLocationRelativeTo(null);
 	}
 	
-	private void setStarterText(){
-		start.setText("http://www.derekbarrera.com");
-		search.setText("Tulips");
-		limit.setText("15");
-	}
-	
+	/*
+	 * the search method instantiates the queues and calls the buildQueue method
+	 */
 	private void search(){
+		websiteQueue = new LinkedList<String>();
+		searchedWebsites = new LinkedList<String>();
 		limitLabelError.setVisible(false);
+		startLabelError.setVisible(false);
 		try{
 			limitNumber = Integer.parseInt(limit.getText());
-			out.setText("Search running...");
+			if(!(start.getText().contains("http"))){
+				throw new Exception();
+			}
+			count = 0;
+			foundCount = 0;
+			out.setText("");
 			buildQueue();
 			
 		}catch(NumberFormatException e){
 			e.getMessage();
 			limit.setText("");
 			limitLabelError.setVisible(true);
+		}catch(Exception e){
+			e.getMessage();
+			start.setText("");
+			startLabelError.setVisible(true);
 		}
 	}
 	
+	/*
+	 * the buildQueue method gets user input. Then starts searching the users first link, grabs all 
+	 * links off that page. then continues to search links to it on each page it searched until the 
+	 * limit is reached
+	 */
 	private void buildQueue(){
+		String temp = "%";
 		long startTime = System.currentTimeMillis();
-		count = 0;
-		out.setText("");
 		String webpage_link, outputText = "";
 	    webpage_link = start.getText();
 	    websiteQueue.add(webpage_link);
-	    
-	    while(websiteQueue.size() > 0 && count < limitNumber){
+	    while(!(websiteQueue.isEmpty()) && count < limitNumber){
 	    	try{
-	    		
-	    		Document doc = Jsoup.connect(websiteQueue.remove()).get();
-
+	    		temp = websiteQueue.remove();
+	    		searchedWebsites.add(temp);
+	    		Document doc = Jsoup.connect(temp).timeout(3000).get();
 	    		if(doc.text().contains(search.getText())){
-	    			outputText += doc.attr("href");
+	    			outputText += temp + "\n";
+	    			foundCount++;
 	    		}
-	    		
 	    		Elements links = doc.select("a[href]");
 	    		for (Element link : links) {
-	    			
-	    			//Check to see if link is a valid link to another page.
-	    			count++;
-	    			System.out.println(link.attr("abs:href"));
-	    			websiteQueue.add(link.attr("abs:href"));
-	    			if(link.text().contains(search.getText()))
-	    				outputText += link.attr("href") + "\n";
+	    			temp = link.attr("abs:href");
+	    			if(websiteQueue.size() < limitNumber)
+	    				if(!(temp.isEmpty()))
+	    					if(!(websiteQueue.contains(temp)))
+		    					if(!(searchedWebsites.contains(temp)))
+		    						if(temp.charAt(temp.length() - 1) != '#')
+		    							websiteQueue.add(temp);
 	    		}
+	    		count++;
 	    	}catch(IOException e){
 	    		e.getMessage();
 	    	}
+	    	System.out.println("link " + count + " - queue size " + websiteQueue.size());
+	    	
 	    }
 	    long endTime = System.currentTimeMillis(); 
-	    outputText += "End of search.\nSearched " + count + " links in " + (endTime - startTime) + " ms";
-	    
+	    outputText += "End of search.\nFound " + foundCount + " matches in " + count + " links in " + (endTime - startTime) + " ms";  
 	    out.setText(outputText);
-	}
+	} 
 	
+	/*
+	 * the SetLocations method sets the locations of the GUI items.
+	 */
 	private void setLocations(){
 		Dimension size;
 		
@@ -136,6 +164,8 @@ public class View extends JFrame{
 		searchLabel.setBounds(startLabel.getX(),startLabel.getY() + 75, size.width, size.height);	
 		size = search.getPreferredSize();
 		search.setBounds(searchLabel.getX() + searchLabel.getWidth() + 15,searchLabel.getY(), size.width, size.height);	
+		size = startLabelError.getPreferredSize();
+		startLabelError.setBounds(start.getX(),start.getY() + start.getHeight() + 5, size.width, size.height);	
 		size = limitLabel.getPreferredSize();
 		limitLabel.setBounds(startLabel.getX(),searchLabel.getY() + 75, size.width, size.height);
 		size = limit.getPreferredSize();
@@ -150,22 +180,30 @@ public class View extends JFrame{
 		output.setBounds(start.getX() + start.getWidth() + 50,startLabel.getY(), size.width, size.height);
 		
 		out.setEditable(false);
-		
 		limitLabelError.setVisible(false);
+		startLabelError.setVisible(false);
 	}
 	
+	/*
+	 * the goButtonListener listens for the go button to be pressed, then runs the search method
+	 */
 	private class goButtonListener implements ActionListener{
 		public void actionPerformed(ActionEvent e) {
 			search();
 		}
 	}
 	
+	/*
+	 * the resetButtonListener listens for the reset button to be pressed, then clears the GUI of all information
+	 */
 	private class resetButtonListener implements ActionListener{
 		public void actionPerformed(ActionEvent e) {
 			start.setText("");
 			search.setText("");
 			limit.setText("");
 			out.setText("");
+			startLabelError.setVisible(false);
+			limitLabelError.setVisible(false);
 		}
 	}
 }
